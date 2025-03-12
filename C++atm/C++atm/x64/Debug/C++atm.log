@@ -1,3 +1,2 @@
 ﻿  C++atm.cpp
-MSVCRTD.lib(exe_main.obj) : error LNK2019: unresolved external symbol main referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
-C:\Users\rufar\OneDrive - Nottingham Trent University\Work\GitHub\ATM\C++atm\x64\Debug\C++atm.exe : fatal error LNK1120: 1 unresolved externals
+C:\Users\rufar\OneDrive\Documents\GitHub\ATM\C++atm\C++atm\C++atm.cpp(17,33): error C2143: syntax error: missing ';' before '{'
