@@ -13,6 +13,7 @@ private:
     double balance;
 
 public:
+    double getBalance() { return balance; }
     void saveToFile() {// function to save account details to file
         ofstream file("accounts.txt", ios::app);  // ios::app = append mode this adds to file instead of overwriting
 
@@ -93,23 +94,25 @@ public:
             << sbalance << "\n";
             file.close();
         }
-        void deposit(amount);
-        {//trasaction function being created
-        balance += amount;
-        saveToFile("savings.txt");//overites data to show new balace
-        cout << "Deposit successful.\n";
-            }
+    }
+    void deposit(double amount){//trasaction function being created
+        sbalance += amount;
+        saveToFile();//overites data to show new balace
+        cout << "Savings deposit successful.\n";
+    }
             
     void withdraw(double amount) {//function for withdraws
-        if (amount > balance) {//calculation to check if withdrawl amount is above balance decilne
+        if (amount > sbalance) {//calculation to check if withdrawl amount is above balance decilne
         cout << "Insufficient funds.\n";
         } else {//anything else allow andf save new balance to file
-            balance -= amount;
-            saveToFile("savings.txt");
-            cout << "Withdrawl successful.\n";
-                }
-            }
+            sbalance -= amount;
+            saveToFile();
+            cout << "Savings withdrawl successful.\n";
         }
+    }
+    
+    void checkBalance() {
+        cout << "Savings balance: £" << sbalance << "\n";
     }
 };
 
@@ -121,16 +124,18 @@ void showMainMenu(bool hasSavings) {
     cout << "1. Check balance\n";
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
-    cout << "4. Exit\n";
-    cout << "Enter your choice (1-4): ";
+    cout << "4: ";
     if(hasSavings) {
-        cout << "5. Transfer to Savings\n";
-        cout << "6. Apply Intrest\n";
-        cout << "7. Check Savings balance\n";
+        cout << "4. Transfer to Savings\n";
+        cout << "5. Check savings balance\n";
+        cout << "6. Exit\n";
+        cout << "Exit\n";
+    }else {
+        cout << "4. Create savings account\n";
+        cout <<"5. Exit\n";
     }
 }
-
-int main() {//object called user under class account
+int main(){ //object called user under class account
     Account user;
     Savings usersavings;
     bool hasSavings = false;
@@ -140,7 +145,7 @@ int main() {//object called user under class account
     do {//start of loop
         showMainMenu(hasSavings);
         cin >> choice;
-            
+        
         switch(choice) {
             case 1: {//goes to chek user option 1
                 user.checkBalance();//calls the checkBalance function to display balance
@@ -160,25 +165,38 @@ int main() {//object called user under class account
                 user.withdraw(amount);
                 break;
             }
-            case 4: {//break out of loop
-                cout << "Thank you for banking with Haven ATM.\n";
-                break;
-            }
-            case 5: {
+            case 4: {
                 if(hasSavings) {
                     double amount;
                     cout << "Transfer amount: £";
                     cin >> amount;
-                    user.withdraw(amount);
-                    usersavings.deposit(amount);
+                    if(amount <= user.getBalance()) {
+                        user.withdraw(amount);
+                        usersavings.deposit(amount);
+                    } else {
+                        cout << "Insufficient funds for transfer.\n";
+                    }
+                }else{
+                    usersavings.createSavingsAccount();
+                    hasSavings = true;
                 }
+                break;
+            }
+            case 5: {
+                if(hasSavings)
+                    usersavings.checkBalance();
+                break;
+            }
+            case 6: {
+                if(hasSavings)
+                    cout << "Thank you for banking with Haven ATM.\n";
             }
             default: {
-                cout << "Invalid choice! Please try again.\n";
+                cout << "Invalid option. Please try again.\n";
+                
             }
         }
-    } while (choice != 4);
+    } while (true);
     
-    return 0;// program ended succesfully
+    return 0;
 }
-
