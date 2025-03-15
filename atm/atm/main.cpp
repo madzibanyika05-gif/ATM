@@ -4,7 +4,7 @@
 #include <fstream> // for file operations
 
 using namespace std;
-
+//phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
     int accountNumber;
@@ -59,23 +59,86 @@ public:
         cout << "current balance: £" << balance << "\n";
     }
 };
+//phase 2.1 creating class for savings
+class Savings {//class for savings
+private:
+    int saccountNumber;
+    int ssortCode;
+    double sbalance;
+    double interestRate = 0.02; //2% intrest rate from trasnfering into savings
+    
+public:
+    void createSavingsAccount() {
+        cout << "\n-=-=-=- Savings Account Setup -=-=-=-\n ";
+        cout << "Enter savings account number: ";
+        cin >> saccountNumber;
+        cout << "Enter sort code: ";
+        cin >> ssortCode;
+        sbalance = 10.00;
+        saveToFile("savings.txt");
+        cout << "Savings account created!\n";
+    }
+
+    void applyInterest() {
+        sbalance += sbalance * interestRate;
+        saveToFile("savings.txt");
+        cout << "Interest applied: £" << sbalance << "\n";
+    }
+
+    void saveToFile(string filename = "savings.txt") {
+        ofstream file(filename, ios::app);
+        if (file.is_open()) {
+            file << saccountNumber << " "
+            << ssortCode << " "
+            << sbalance << "\n";
+            file.close();
+        }
+        void deposit(amount);
+        {//trasaction function being created
+        balance += amount;
+        saveToFile("savings.txt");//overites data to show new balace
+        cout << "Deposit successful.\n";
+            }
+            
+    void withdraw(double amount) {//function for withdraws
+        if (amount > balance) {//calculation to check if withdrawl amount is above balance decilne
+        cout << "Insufficient funds.\n";
+        } else {//anything else allow andf save new balance to file
+            balance -= amount;
+            saveToFile("savings.txt");
+            cout << "Withdrawl successful.\n";
+                }
+            }
+        }
+    }
+};
+
+
+
 //now creating main menu
-void showMainMenu() {
+void showMainMenu(bool hasSavings) {
     cout << "\n-=-=-=- Haven ATM, Main Menu -=-=-=-\n";
     cout << "1. Check balance\n";
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
     cout << "4. Exit\n";
     cout << "Enter your choice (1-4): ";
+    if(hasSavings) {
+        cout << "5. Transfer to Savings\n";
+        cout << "6. Apply Intrest\n";
+        cout << "7. Check Savings balance\n";
+    }
 }
 
-    int main() {//object called user under class account
+int main() {//object called user under class account
     Account user;
+    Savings usersavings;
+    bool hasSavings = false;
     user.createAccount();
     
     int choice;
     do {//start of loop
-        showMainMenu();
+        showMainMenu(hasSavings);
         cin >> choice;
             
         switch(choice) {
@@ -100,6 +163,15 @@ void showMainMenu() {
             case 4: {//break out of loop
                 cout << "Thank you for banking with Haven ATM.\n";
                 break;
+            }
+            case 5: {
+                if(hasSavings) {
+                    double amount;
+                    cout << "Transfer amount: £";
+                    cin >> amount;
+                    user.withdraw(amount);
+                    usersavings.deposit(amount);
+                }
             }
             default: {
                 cout << "Invalid choice! Please try again.\n";
