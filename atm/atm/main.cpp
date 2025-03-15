@@ -35,7 +35,7 @@ public:
         cin >> sortCode;
         cout << "Enter your pin: ";
         cin >> pin;
-        balance = 1000000.00; //startinh balance of 1m
+        balance = 1000.00; //startinh balance of 1k
         saveToFile();
         cout << "Account created successfully.\n";//account made
     }
@@ -59,10 +59,54 @@ public:
         cout << "current balance: £" << balance << "\n";
     }
 };
+//now creating main menu
+void showMainMenu() {
+    cout << "\n-=-=-=- Haven ATM, Main Menu -=-=-=-\n";
+    cout << "1. Check balance\n";
+    cout << "2. Deposit money\n";
+    cout << "3. Withdraw money\n";
+    cout << "4. Exit\n";
+    cout << "Enter your choice (1-4): ";
+}
 
-int main() {
+    int main() {//object called user under class account
     Account user;
     user.createAccount();
+    
+    int choice;
+    do {//start of loop
+        showMainMenu();
+        cin >> choice;
+            
+        switch(choice) {
+            case 1: {//goes to chek user option 1
+                user.checkBalance();//calls the checkBalance function to display balance
+                break;//exists switch from itterationa and goes back to main menu
+            }
+            case 2: {
+                double amount;
+                cout << "Enter deposit amount: £";
+                cin >> amount;
+                user.deposit(amount);
+                break;
+            }
+            case 3: {
+                double amount;
+                cout << "Enter withdrawl amount: £";
+                cin >> amount;
+                user.withdraw(amount);
+                break;
+            }
+            case 4: {//break out of loop
+                cout << "Thank you for banking with Haven ATM.\n";
+                break;
+            }
+            default: {
+                cout << "Invalid choice! Please try again.\n";
+            }
+        }
+    } while (choice != 4);
+    
     return 0;// program ended succesfully
 }
 
