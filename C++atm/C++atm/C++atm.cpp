@@ -2,8 +2,13 @@
 #include <string>  // used for string data type
 #include <vector> // used for arrays
 #include <fstream> // for file operations
+#include <sstream> // for string streams
+#include <cpprest/http_client.h> // for API to be called
 
 using namespace std;
+using namespace web;
+using namespace web::http;
+using namespace web::http::client;
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
@@ -11,6 +16,14 @@ private:
     int pin;
     int sortCode;
     double balance;
+    string currency = "GBP";
+
+    void convertAndDeposit(double amount, string fromCurrency) {
+        CurrencyConverter converter;
+        converter.updateRates();
+        double converted = converter.convert(amount, fromCurrency, currency);
+        deposit(converted);
+    }
 
 public:
     double getBalance() { return balance; }
@@ -40,7 +53,11 @@ public:
         saveToFile();
         cout << "Account created successfully.\n";//account made
     }
-    void deposit(double amount) {//trasaction function being created
+    void deposit(double amount, string fromCurrency = "GBP") {//trasaction function being created
+        if(fromCurrency != currency) {
+            convertAndDeposit(amount, fromCurrency);
+            return;
+        }else{
         balance += amount;
         saveToFile();//overites data to show new balace
         cout << "Deposit successful.\n";
@@ -117,8 +134,49 @@ public:
         cout << "Savings balance: £" << sbalance << "\n";
     }
 };
+//phase 2.2 creating class for currency converter
+class CurrencyConverter
+private:
+    const string string apiKey = "f78cc7fbb42a99760e7657a1"; //API key
+    double gbpToUsd = 1.27; // backup average exchange rate if api fails
+    double gbpToEur = 1.17;
+    double usdToEur = 0.86;
+    
+    public:
+    //menu for currency converter
+        void showCurrencyMenu() {
+        cout << "\n-=-=-=- Select currency -=-=-=-\n";
+        cout << "1. GBP (£)\n";
+        cout << "2. USD ($)\n";
+        cout << "3. EUR (€)\n";
+        cout << "Choice: ";
+        }
 
+    void updateRates() {
+        http_client client(U("https://v6.exchangerate-api.com/v6/f78cc7fbb42a99760e7657a1/latest/USD"));
+        uri_builder builder(U(apiKey + "/latest/GBP"));
 
+        client.request(methods::GET, builder.to_string())
+             .then([](http_response response) {
+              return response.extract_json();
+             })
+             .then([&](json::value json) {
+             if (json.has_field(U("conversion_rates"))) {
+             auto rates = json[U("conversion_rates")];
+             gbpToUsd = rates[U("USD")].as_double();
+             gbpToEur = rates[U("EUR")].as_double();
+             }
+           }).wait();
+    }
+
+    double convert(double amount, string from, string to) {
+    if (from == "GBP" && to == "USD") return amount * gbpToUsd;
+    if (from == "GBP" && to == "EUR") return amount * gbpToEur;
+    if (from == "USD" && to == "GBP") return amount / gbpToUsd;
+    if (from == "EUR" && to == "GBP") return amount / gbpToEur;
+    return amount; // Fallback
+    }
+};
 
 //now creating main menu
 void showMainMenu(bool hasSavings) {
@@ -126,6 +184,7 @@ void showMainMenu(bool hasSavings) {
     cout << "1. Check balance\n";
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
+    cout << "7. Deposit foreign currency\n"
     cout << "4: ";
     if (hasSavings) {
         cout << "4. Transfer to Savings\n";
@@ -195,6 +254,20 @@ int main() { //object called user under class account
         case 6: {
             if (hasSavings)
                 cout << "Thank you for banking with Haven ATM.\n";
+        }
+        case 7: {
+            double amount;
+            int currencyChoice;
+
+            showCurrencyMenu()
+                cin >> currencyChioce;
+
+            cout << "Enter amount: ";
+            cin >> amount;
+
+            string currencies[] = { "GBP", "USD", "EUR" };
+            user.deposit(amount, currencies[currencyChoice - 1]);
+            break;
         }
         default: {
             cout << "Invalid option. Please try again.\n";
