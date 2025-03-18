@@ -4,11 +4,13 @@
 #include <fstream> // for file operations
 #include <sstream> // for string streams
 #include <cpprest/http_client.h> // for API to be called
+#include <cpprest/json.h>
 
 using namespace std;
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
+using namespace web::json;
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
@@ -19,17 +21,19 @@ private:
     string currency = "GBP";
 
     void convertAndDeposit(double amount, string fromCurrency) {
-        CurrencyConverter converter;
+        class CurrencyConverter converter;
         converter.updateRates();
         double converted = converter.convert(amount, fromCurrency, currency);
-        deposit(converted);
+        balance += converted;
+        saveToFile();
+        cout << "Deposit successful. Converted amount: £" << converted << "\n";
     }
 
 public:
     double getBalance() { return balance; }
+
     void saveToFile() {// function to save account details to file
         ofstream file("accounts.txt", ios::app);  // ios::app = append mode this adds to file instead of overwriting
-
         if (file.is_open()) {//checks if file opens successfully and writes account number etc...
             file << accountNumber << " "
                 << sortCode << " "
@@ -53,14 +57,16 @@ public:
         saveToFile();
         cout << "Account created successfully.\n";//account made
     }
+
     void deposit(double amount, string fromCurrency = "GBP") {//trasaction function being created
-        if(fromCurrency != currency) {
+        if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
-            return;
-        }else{
-        balance += amount;
-        saveToFile();//overites data to show new balace
-        cout << "Deposit successful.\n";
+        }
+        else {
+            balance += amount;
+            saveToFile();//overites data to show new balace
+            cout << "Deposit successful.\n";
+        }
     }
 
     void withdraw(double amount) {//function for withdraws
@@ -135,46 +141,46 @@ public:
     }
 };
 //phase 2.2 creating class for currency converter
-class CurrencyConverter
+class CurrencyConverter {
 private:
-    const string string apiKey = "f78cc7fbb42a99760e7657a1"; //API key
+    const string apiKey = "f78cc7fbb42a99760e7657a1"; //API key
     double gbpToUsd = 1.27; // backup average exchange rate if api fails
     double gbpToEur = 1.17;
     double usdToEur = 0.86;
-    
-    public:
+
+public:
     //menu for currency converter
-        void showCurrencyMenu() {
+    void showCurrencyMenu() {
         cout << "\n-=-=-=- Select currency -=-=-=-\n";
         cout << "1. GBP (£)\n";
         cout << "2. USD ($)\n";
         cout << "3. EUR (€)\n";
         cout << "Choice: ";
-        }
+    }
 
     void updateRates() {
         http_client client(U("https://v6.exchangerate-api.com/v6/f78cc7fbb42a99760e7657a1/latest/USD"));
         uri_builder builder(U(apiKey + "/latest/GBP"));
 
         client.request(methods::GET, builder.to_string())
-             .then([](http_response response) {
-              return response.extract_json();
-             })
-             .then([&](json::value json) {
-             if (json.has_field(U("conversion_rates"))) {
-             auto rates = json[U("conversion_rates")];
-             gbpToUsd = rates[U("USD")].as_double();
-             gbpToEur = rates[U("EUR")].as_double();
-             }
-           }).wait();
+            .then([](http_response response) {
+            return response.extract_json();
+                })
+            .then([&](json::value json) {
+            if (json.has_field(U("conversion_rates"))) {
+                auto rates = json[U("conversion_rates")];
+                gbpToUsd = rates[U("USD")].as_double();
+                gbpToEur = rates[U("EUR")].as_double();
+            }
+                }).wait();
     }
 
     double convert(double amount, string from, string to) {
-    if (from == "GBP" && to == "USD") return amount * gbpToUsd;
-    if (from == "GBP" && to == "EUR") return amount * gbpToEur;
-    if (from == "USD" && to == "GBP") return amount / gbpToUsd;
-    if (from == "EUR" && to == "GBP") return amount / gbpToEur;
-    return amount; // Fallback
+        if (from == "GBP" && to == "USD") return amount * gbpToUsd;
+        if (from == "GBP" && to == "EUR") return amount * gbpToEur;
+        if (from == "USD" && to == "GBP") return amount / gbpToUsd;
+        if (from == "EUR" && to == "GBP") return amount / gbpToEur;
+        return amount; // Fallback
     }
 };
 
@@ -184,35 +190,35 @@ void showMainMenu(bool hasSavings) {
     cout << "1. Check balance\n";
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
-    cout << "7. Deposit foreign currency\n"
-    cout << "4: ";
+    cout << "4. Deposit foreign currency\n";
     if (hasSavings) {
-        cout << "4. Transfer to Savings\n";
-        cout << "5. Check savings balance\n";
-        cout << "6. Exit\n";
-        cout << "Exit\n";
+        cout << "5. Transfer to Savings\n";
+        cout << "6. Check savings balance\n";
+        cout << "7. Exit\n";
     }
     else {
-        cout << "4. Create savings account\n";
-        cout << "5. Exit\n";
+        cout << "5. Create savings account\n";
+        cout << "6. Exit\n";
     }
 }
-int main() { //object called user under class account
+
+int main() {
     Account user;
     Savings usersavings;
+    CurrencyConverter converter;
     bool hasSavings = false;
     user.createAccount();
 
     int choice;
-    do {//start of loop
+    do {
         showMainMenu(hasSavings);
         cin >> choice;
 
         switch (choice) {
-        case 1: {//goes to chek user option 1
-            user.checkBalance();//calls the checkBalance function to display balance
-            break;//exists switch from itterationa and goes back to main menu
-        }
+        case 1:
+            user.checkBalance();
+            break;
+
         case 2: {
             double amount;
             cout << "Enter deposit amount: £";
@@ -220,13 +226,15 @@ int main() { //object called user under class account
             user.deposit(amount);
             break;
         }
+
         case 3: {
             double amount;
-            cout << "Enter withdrawl amount: £";
+            cout << "Enter withdrawal amount: £";
             cin >> amount;
             user.withdraw(amount);
             break;
         }
+
         case 4: {
             if (hasSavings) {
                 double amount;
@@ -246,21 +254,26 @@ int main() { //object called user under class account
             }
             break;
         }
+
         case 5: {
             if (hasSavings)
                 usersavings.checkBalance();
             break;
         }
+
         case 6: {
-            if (hasSavings)
+            if (hasSavings) {
                 cout << "Thank you for banking with Haven ATM.\n";
+                return 0;
+            }
+            break;
         }
+
         case 7: {
             double amount;
             int currencyChoice;
-
-            showCurrencyMenu()
-                cin >> currencyChioce;
+            converter.showCurrencyMenu();
+            cin >> currencyChoice;
 
             cout << "Enter amount: ";
             cin >> amount;
@@ -269,10 +282,9 @@ int main() { //object called user under class account
             user.deposit(amount, currencies[currencyChoice - 1]);
             break;
         }
-        default: {
-            cout << "Invalid option. Please try again.\n";
 
-        }
+        default:
+            cout << "Invalid option. Please try again.\n";
         }
     } while (true);
 
