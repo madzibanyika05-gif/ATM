@@ -5,7 +5,32 @@
 #include <sstream> // for string streams
 
 using namespace std;
+//phase 2.2 creating class for currency converter
+class CurrencyConverter {
+private:
+    const double gbpToUsd = 1.27; // backup average exchange rate if api fails
+    const double gbpToEur = 1.17;
+    const double usdToGbp = 0.86;
+    const double eurToGbp = 1.14;
 
+public:
+    //menu for currency converter
+    void showCurrencyMenu() {
+        cout << "\n-=-=-=- Select currency -=-=-=-\n";
+        cout << "1. GBP (£)\n";
+        cout << "2. USD ($)\n";
+        cout << "3. EUR (€)\n";
+        cout << "Choice: ";
+    }
+
+    double convert(double amount, string from, string to) {
+        if (from == "GBP" && to == "USD") return amount * gbpToUsd;
+        if (from == "GBP" && to == "EUR") return amount * gbpToEur;
+        if (from == "USD" && to == "GBP") return amount * usdToGbp;
+        if (from == "EUR" && to == "GBP") return amount * eurToGbp;
+        return amount; // Fallback
+    }
+};
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
@@ -132,32 +157,6 @@ public:
 
     void checkBalance() {
         cout << "Savings balance: £" << sbalance << "\n";
-    }
-};
-//phase 2.2 creating class for currency converter
-class CurrencyConverter {
-private:
-    const double gbpToUsd = 1.27; // backup average exchange rate if api fails
-    const double gbpToEur = 1.17;
-    const double usdToGbp = 0.86;
-    const double eurToGbp = 1.14;
-
-public:
-    //menu for currency converter
-    void showCurrencyMenu() {
-        cout << "\n-=-=-=- Select currency -=-=-=-\n";
-        cout << "1. GBP (£)\n";
-        cout << "2. USD ($)\n";
-        cout << "3. EUR (€)\n";
-        cout << "Choice: ";
-    }
-
-    double convert(double amount, string from, string to) {
-        if (from == "GBP" && to == "USD") return amount * gbpToUsd;
-        if (from == "GBP" && to == "EUR") return amount * gbpToEur;
-        if (from == "USD" && to == "GBP") return amount * usdToGbp;
-        if (from == "EUR" && to == "GBP") return amount * eurToGbp;
-        return amount; // Fallback
     }
 };
 
