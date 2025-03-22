@@ -10,8 +10,8 @@ class CurrencyConverter {
 private:
     const double gbpToUsd = 1.27; // backup average exchange rate if api fails
     const double gbpToEur = 1.17;
-    const double usdToGbp = 0.86;
-    const double eurToGbp = 1.14;
+    const double usdToGbp = 1/1.27;
+    const double eurToGbp = 1/1.17;
 
 public:
     //menu for currency converter
@@ -76,7 +76,30 @@ public:
         saveToFile();
         cout << "Account created successfully.\n";//account made
     }
-
+    void resetPIN() {//reset pin function update 3.5
+        int oldPIN, newPIN, confirmPIN;
+        cout << "Enter old pin: ";
+        cin >> oldPIN;
+        
+        if (oldPIN != pin) {
+            cout << "Incorrect pin.\n";
+            return;
+        }
+        
+        cout << "Enter new pin: ";
+        cin >> newPIN;
+        cout << "Confirm pin: ";
+        cin >> confirmPIN;
+        
+        if (newPIN != confirmPIN) {// if pins do not have same value
+            cout << "Pin dooes not match.\n";
+            return;
+        }
+        
+        pin = newPIN;
+        saveToFile();
+        cout << "Pin change successful.\n";
+    }
     void deposit(double amount, string fromCurrency = "GBP") {//trasaction function being created
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
