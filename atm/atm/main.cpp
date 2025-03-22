@@ -5,7 +5,7 @@
 #include <sstream> // for string streams
 
 using namespace std;
-//phase 2.2 creating class for currency converter
+//phase 2.2 creating class for currency converter had to move to the begining
 class CurrencyConverter {
 private:
     const double gbpToUsd = 1.27; // backup average exchange rate if api fails
@@ -52,7 +52,7 @@ public:
     double getBalance() { return balance; }
 
     void saveToFile() {// function to save account details to file
-        ofstream file("accounts.txt", ios::app);  // ios::app = append mode this adds to file instead of overwriting
+        ofstream file("accounts.txt", ios::trunc);  // ios::app = append mode this adds to file instead of overwriting//changed to trunc to overwrite
         if (file.is_open()) {//checks if file opens successfully and writes account number etc...
             file << accountNumber << " "
                 << sortCode << " "
@@ -190,14 +190,15 @@ void showMainMenu(bool hasSavings) {
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
     cout << "4. Deposit foreign currency\n";
+    cout << "5. Reset pin\n";
     if (hasSavings) {
-        cout << "5. Transfer to Savings\n";
-        cout << "6. Check savings balance\n";
-        cout << "7. Exit\n";
+        cout << "6. Transfer to Savings\n";
+        cout << "7. Check savings balance\n";
+        cout << "8. Exit\n";
     }
     else {
-        cout << "5. Create savings account\n";
-        cout << "6. Exit\n";
+        cout << "6. Create savings account\n";
+        cout << "7. Exit\n";
     }
 }
 
@@ -234,7 +235,7 @@ int main() {
             break;
         }
 
-        case 4: {
+        case 6: {
             if (hasSavings) {
                 double amount;
                 cout << "Transfer amount: £";
@@ -253,14 +254,24 @@ int main() {
             }
             break;
         }
-
+        
         case 5: {
-            if (hasSavings)
-                usersavings.checkBalance();
+            user.resetPIN();
             break;
         }
+                
+        case 7: {
+            if (hasSavings) {
+                usersavings.checkBalance();
+            }
+            else {
+                cout << "Thank you for banking with Haven ATM.\n";
+                return 0;
+            }
+            break;
+            }
 
-        case 6: {
+        case 8: {
             if (hasSavings) {
                 cout << "Thank you for banking with Haven ATM.\n";
                 return 0;
@@ -268,7 +279,7 @@ int main() {
             break;
         }
 
-        case 7: {
+        case 4: {
             double amount;
             int currencyChoice;
             converter.showCurrencyMenu();
