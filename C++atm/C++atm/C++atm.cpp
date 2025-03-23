@@ -3,14 +3,52 @@
 #include <vector> // used for arrays
 #include <fstream> // for file operations
 #include <sstream> // for string streams
-#include <cpprest/http_client.h> // for API to be called
-#include <cpprest/json.h>
+#include <chrono>
+#include <iomanip>
 
 using namespace std;
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
-using namespace web::json;
+//phase 2.2 creating class for currency converter had to move to the begining
+class CurrencyConverter {
+private:
+    const double gbpToUsd = 1.27; // backup average exchange rate if api fails
+    const double gbpToEur = 1.17;
+    const double usdToGbp = 1 / 1.27;
+    const double eurToGbp = 1 / 1.17;
+
+public:
+    //menu for currency converter
+    void showCurrencyMenu() {
+        cout << "\n-=-=-=- Select currency -=-=-=-\n";
+        cout << "1. GBP (£)\n";
+        cout << "2. USD ($)\n";
+        cout << "3. EUR (€)\n";
+        cout << "Choice: ";
+    }
+    
+    double convert(double amount, string from, string to) {
+        if (from == "GBP" && to == "USD") return amount * gbpToUsd;
+        if (from == "GBP" && to == "EUR") return amount * gbpToEur;
+        if (from == "USD" && to == "GBP") return amount * usdToGbp;
+        if (from == "EUR" && to == "GBP") return amount * eurToGbp;
+        return amount; // Fallback
+    }
+};
+//phase 4.0 transaction history
+struct Transaction {
+    string type;
+    double amount;
+    string timestamp;
+};
+
+string getCurrentTime() {
+    auto now = chrono::system_clock::now();
+    time_t now_time = chrono::system_clock::to_time_t(now);
+    tm tm_struct;
+    localtime_s(&tm_struct, &now_time);
+    stringstream ss;
+    ss << put_time(&tm_struct, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
@@ -21,19 +59,33 @@ private:
     string currency = "GBP";
 
     void convertAndDeposit(double amount, string fromCurrency) {
-        class CurrencyConverter converter;
-        converter.updateRates();
+        CurrencyConverter converter;
         double converted = converter.convert(amount, fromCurrency, currency);
         balance += converted;
         saveToFile();
         cout << "Deposit successful. Converted amount: £" << converted << "\n";
     }
 
+    vector<Transaction> transactions;
+
+    void logTransaction(string type, double amount) {
+        Transaction t;
+        t.type = type;
+        t.amount = amount;
+        t.timestamp = getCurrentTime();
+        transactions.push_back(t);
+
+        ofstream log("account_transactions.txt", ios::app);// saving transactions to files
+        if (log.is_open()) {
+            log << t.timestamp << "|" << type << "|£" << amount << endl;
+        }
+    }
+
 public:
     double getBalance() { return balance; }
 
     void saveToFile() {// function to save account details to file
-        ofstream file("accounts.txt", ios::app);  // ios::app = append mode this adds to file instead of overwriting
+        ofstream file("accounts.txt", ios::trunc);  // ios::app = append mode this adds to file instead of overwriting//changed to trunc to overwrite
         if (file.is_open()) {//checks if file opens successfully and writes account number etc...
             file << accountNumber << " "
                 << sortCode << " "
@@ -57,14 +109,39 @@ public:
         saveToFile();
         cout << "Account created successfully.\n";//account made
     }
+    void resetPIN() {//reset pin function update 3.5
+        int oldPIN, newPIN, confirmPIN;
+        cout << "Enter old pin: ";
+        cin >> oldPIN;
 
+        if (oldPIN != pin) {
+            cout << "Incorrect pin.\n";
+            return;
+        }
+
+        cout << "Enter new pin: ";
+        cin >> newPIN;
+        cout << "Confirm pin: ";
+        cin >> confirmPIN;
+
+        if (newPIN != confirmPIN) {// if pins do not have same value
+            cout << "Pin dooes not match.\n";
+            return;
+        }
+
+        pin = newPIN;
+        saveToFile();
+        cout << "Pin change successful.\n";
+    }
     void deposit(double amount, string fromCurrency = "GBP") {//trasaction function being created
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
+            logTransaction("FOREIGN DEPOSIT", amount);
         }
         else {
             balance += amount;
             saveToFile();//overites data to show new balace
+            logTransaction("DEPOSIT", amount);
             cout << "Deposit successful.\n";
         }
     }
@@ -76,12 +153,20 @@ public:
         else {//anything else allow andf save new balance to file
             balance -= amount;
             saveToFile();
+            logTransaction("WITHDRAWAL", amount);
             cout << "Withdrawl successful.\n";
         }
     }
 
     void checkBalance() {
         cout << "current balance: £" << balance << "\n";
+    }
+
+    void showTransactionHistory() {
+        cout << "\nAccount Transaction History:\n";
+        for (auto& t : transactions) {
+            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+        }
     }
 };
 //phase 2.1 creating class for savings
@@ -91,6 +176,21 @@ private:
     int ssortCode;
     double sbalance;
     double interestRate = 0.02; //2% intrest rate from trasnfering into savings
+
+    vector<Transaction> transactions;
+
+    void logTransaction(string type, double amount) {
+        Transaction t;
+        t.type = type;
+        t.amount = amount;
+        t.timestamp = getCurrentTime();
+        transactions.push_back(t);
+
+        ofstream log("savings_transaction.txt", ios::app);
+        if (log.is_open()) {
+            log << t.timestamp << "|" << type << "| £" << amount << endl;
+        }
+    }
 
 public:
     void createSavingsAccount() {
@@ -105,9 +205,9 @@ public:
     }
 
     void applyInterest() {
-        sbalance += sbalance * interestRate;
-        saveToFile("savings.txt");
-        cout << "Interest applied: £" << sbalance << "\n";
+        double interest = sbalance * interestRate;
+        sbalance += interest;
+        saveToFile();
     }
 
     void saveToFile(string filename = "savings.txt") {
@@ -121,7 +221,9 @@ public:
     }
     void deposit(double amount) {//trasaction function being created
         sbalance += amount;
+        applyInterest();
         saveToFile();//overites data to show new balace
+        logTransaction("DEPOSIT", amount);
         cout << "Savings deposit successful.\n";
     }
 
@@ -131,7 +233,9 @@ public:
         }
         else {//anything else allow andf save new balance to file
             sbalance -= amount;
+            applyInterest();
             saveToFile();
+            logTransaction("WITHDRAWAL", amount);
             cout << "Savings withdrawl successful.\n";
         }
     }
@@ -139,48 +243,12 @@ public:
     void checkBalance() {
         cout << "Savings balance: £" << sbalance << "\n";
     }
-};
-//phase 2.2 creating class for currency converter
-class CurrencyConverter {
-private:
-    const string apiKey = "f78cc7fbb42a99760e7657a1"; //API key
-    double gbpToUsd = 1.27; // backup average exchange rate if api fails
-    double gbpToEur = 1.17;
-    double usdToEur = 0.86;
 
-public:
-    //menu for currency converter
-    void showCurrencyMenu() {
-        cout << "\n-=-=-=- Select currency -=-=-=-\n";
-        cout << "1. GBP (£)\n";
-        cout << "2. USD ($)\n";
-        cout << "3. EUR (€)\n";
-        cout << "Choice: ";
-    }
-
-    void updateRates() {
-        http_client client(U("https://v6.exchangerate-api.com/v6/f78cc7fbb42a99760e7657a1/latest/USD"));
-        uri_builder builder(U(apiKey + "/latest/GBP"));
-
-        client.request(methods::GET, builder.to_string())
-            .then([](http_response response) {
-            return response.extract_json();
-                })
-            .then([&](json::value json) {
-            if (json.has_field(U("conversion_rates"))) {
-                auto rates = json[U("conversion_rates")];
-                gbpToUsd = rates[U("USD")].as_double();
-                gbpToEur = rates[U("EUR")].as_double();
-            }
-                }).wait();
-    }
-
-    double convert(double amount, string from, string to) {
-        if (from == "GBP" && to == "USD") return amount * gbpToUsd;
-        if (from == "GBP" && to == "EUR") return amount * gbpToEur;
-        if (from == "USD" && to == "GBP") return amount / gbpToUsd;
-        if (from == "EUR" && to == "GBP") return amount / gbpToEur;
-        return amount; // Fallback
+    void showTransactionHistory() {
+        cout << "\nSavings Transaction History:\n";
+        for (auto& t : transactions) {
+            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+        }
     }
 };
 
@@ -191,14 +259,16 @@ void showMainMenu(bool hasSavings) {
     cout << "2. Deposit money\n";
     cout << "3. Withdraw money\n";
     cout << "4. Deposit foreign currency\n";
+    cout << "5. Reset pin\n";
+    cout << "6. Transaction history\n";
     if (hasSavings) {
-        cout << "5. Transfer to Savings\n";
-        cout << "6. Check savings balance\n";
-        cout << "7. Exit\n";
+        cout << "7. Transfer to Savings\n";
+        cout << "8. Check savings balance\n";
+        cout << "9. Exit\n";
     }
     else {
-        cout << "5. Create savings account\n";
-        cout << "6. Exit\n";
+        cout << "7. Create savings account\n";
+        cout << "8. Exit\n";
     }
 }
 
@@ -235,7 +305,7 @@ int main() {
             break;
         }
 
-        case 4: {
+        case 7: {
             if (hasSavings) {
                 double amount;
                 cout << "Transfer amount: £";
@@ -256,12 +326,28 @@ int main() {
         }
 
         case 5: {
-            if (hasSavings)
-                usersavings.checkBalance();
+            user.resetPIN();
             break;
         }
 
         case 6: {
+            user.showTransactionHistory();
+            break;
+        }
+
+        case 8: {
+            if (hasSavings) {
+                usersavings.checkBalance();
+                break;
+            }
+            else {
+                cout << "Thank you for banking with Haven ATM.\n";
+                return 0;
+            }
+            break;
+        }
+
+        case 9: {
             if (hasSavings) {
                 cout << "Thank you for banking with Haven ATM.\n";
                 return 0;
@@ -269,7 +355,7 @@ int main() {
             break;
         }
 
-        case 7: {
+        case 4: {
             double amount;
             int currencyChoice;
             converter.showCurrencyMenu();
