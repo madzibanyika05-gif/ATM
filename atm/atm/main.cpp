@@ -12,8 +12,8 @@ class CurrencyConverter {
 private:
     const double gbpToUsd = 1.27; // backup average exchange rate if api fails
     const double gbpToEur = 1.17;
-    const double usdToGbp = 1/1.27;
-    const double eurToGbp = 1/1.17;
+    const double usdToGbp = 1 / 1.27;
+    const double eurToGbp = 1 / 1.17;
 
 public:
     //menu for currency converter
@@ -24,7 +24,7 @@ public:
         cout << "3. EUR (€)\n";
         cout << "Choice: ";
     }
-
+    
     double convert(double amount, string from, string to) {
         if (from == "GBP" && to == "USD") return amount * gbpToUsd;
         if (from == "GBP" && to == "EUR") return amount * gbpToEur;
@@ -65,17 +65,17 @@ private:
         saveToFile();
         cout << "Deposit successful. Converted amount: £" << converted << "\n";
     }
-    
+
     vector<Transaction> transactions;
-    
+
     void logTransaction(string type, double amount) {
         Transaction t;
         t.type = type;
         t.amount = amount;
         t.timestamp = getCurrentTime();
         transactions.push_back(t);
-        
-        ofstream log("account_transactions.txt",ios::app);// saving transactions to files
+
+        ofstream log("account_transactions.txt", ios::app);// saving transactions to files
         if (log.is_open()) {
             log << t.timestamp << "|" << type << "|£" << amount << endl;
         }
@@ -113,22 +113,22 @@ public:
         int oldPIN, newPIN, confirmPIN;
         cout << "Enter old pin: ";
         cin >> oldPIN;
-        
+
         if (oldPIN != pin) {
             cout << "Incorrect pin.\n";
             return;
         }
-        
+
         cout << "Enter new pin: ";
         cin >> newPIN;
         cout << "Confirm pin: ";
         cin >> confirmPIN;
-        
+
         if (newPIN != confirmPIN) {// if pins do not have same value
             cout << "Pin dooes not match.\n";
             return;
         }
-        
+
         pin = newPIN;
         saveToFile();
         cout << "Pin change successful.\n";
@@ -161,7 +161,7 @@ public:
     void checkBalance() {
         cout << "current balance: £" << balance << "\n";
     }
-    
+
     void showTransactionHistory() {
         cout << "\nAccount Transaction History:\n";
         for (auto& t : transactions) {
@@ -176,16 +176,16 @@ private:
     int ssortCode;
     double sbalance;
     double interestRate = 0.02; //2% intrest rate from trasnfering into savings
-    
+
     vector<Transaction> transactions;
-    
-    void logTransaction(string type, double amouunt) {
+
+    void logTransaction(string type, double amount) {
         Transaction t;
         t.type = type;
         t.amount = amount;
         t.timestamp = getCurrentTime();
-        transaction.push_back(t);
-        
+        transactions.push_back(t);
+
         ofstream log("savings_transaction.txt", ios::app);
         if (log.is_open()) {
             log << t.timestamp << "|" << type << "| £" << amount << endl;
@@ -205,9 +205,9 @@ public:
     }
 
     void applyInterest() {
-        sbalance += sbalance * interestRate;
-        saveToFile("savings.txt");
-        cout << "Interest applied: £" << sbalance << "\n";
+        double interest = sbalance * interestRate;
+        sbalance += interest;
+        saveToFile();
     }
 
     void saveToFile(string filename = "savings.txt") {
@@ -221,6 +221,7 @@ public:
     }
     void deposit(double amount) {//trasaction function being created
         sbalance += amount;
+        applyInterest();
         saveToFile();//overites data to show new balace
         logTransaction("DEPOSIT", amount);
         cout << "Savings deposit successful.\n";
@@ -232,6 +233,7 @@ public:
         }
         else {//anything else allow andf save new balance to file
             sbalance -= amount;
+            applyInterest();
             saveToFile();
             logTransaction("WITHDRAWAL", amount);
             cout << "Savings withdrawl successful.\n";
@@ -241,7 +243,7 @@ public:
     void checkBalance() {
         cout << "Savings balance: £" << sbalance << "\n";
     }
-    
+
     void showTransactionHistory() {
         cout << "\nSavings Transaction History:\n";
         for (auto& t : transactions) {
@@ -258,14 +260,15 @@ void showMainMenu(bool hasSavings) {
     cout << "3. Withdraw money\n";
     cout << "4. Deposit foreign currency\n";
     cout << "5. Reset pin\n";
+    cout << "6. Transaction history\n";
     if (hasSavings) {
-        cout << "6. Transfer to Savings\n";
-        cout << "7. Check savings balance\n";
-        cout << "8. Exit\n";
+        cout << "7. Transfer to Savings\n";
+        cout << "8. Check savings balance\n";
+        cout << "9. Exit\n";
     }
     else {
-        cout << "6. Create savings account\n";
-        cout << "7. Exit\n";
+        cout << "7. Create savings account\n";
+        cout << "8. Exit\n";
     }
 }
 
@@ -302,7 +305,7 @@ int main() {
             break;
         }
 
-        case 6: {
+        case 7: {
             if (hasSavings) {
                 double amount;
                 cout << "Transfer amount: £";
@@ -321,24 +324,30 @@ int main() {
             }
             break;
         }
-        
+
         case 5: {
             user.resetPIN();
             break;
         }
-                
-        case 7: {
+
+        case 6: {
+            user.showTransactionHistory();
+            break;
+        }
+
+        case 8: {
             if (hasSavings) {
                 usersavings.checkBalance();
+                break;
             }
             else {
                 cout << "Thank you for banking with Haven ATM.\n";
                 return 0;
             }
             break;
-            }
+        }
 
-        case 8: {
+        case 9: {
             if (hasSavings) {
                 cout << "Thank you for banking with Haven ATM.\n";
                 return 0;
