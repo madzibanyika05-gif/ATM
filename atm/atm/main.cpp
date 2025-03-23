@@ -3,6 +3,8 @@
 #include <vector> // used for arrays
 #include <fstream> // for file operations
 #include <sstream> // for string streams
+#include <chrono>
+#include <iomanip>
 
 using namespace std;
 //phase 2.2 creating class for currency converter had to move to the begining
@@ -31,6 +33,22 @@ public:
         return amount; // Fallback
     }
 };
+//phase 4.0 transaction history
+struct Transaction {
+    string type;
+    double amount;
+    string timestamp;
+};
+
+string getCurrentTime() {
+    auto now = chrono::system_clock::now();
+    time_t now_time = chrono::system_clock::to_time_t(now);
+    tm tm_struct;
+    localtime_s(&tm_struct, &now_time);
+    stringstream ss;
+    ss << put_time(&tm_struct, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
 private:
@@ -46,6 +64,21 @@ private:
         balance += converted;
         saveToFile();
         cout << "Deposit successful. Converted amount: £" << converted << "\n";
+    }
+    
+    vector<Transaction> transactions;
+    
+    void logTransaction(string type, double amount) {
+        Transaction t;
+        t.type = type;
+        t.amount = amount;
+        t.timestamp = getCurrentTime();
+        transactions.push_back(t);
+        
+        ofstream log("account_transactions.txt",ios::app);// saving transactions to files
+        if (log.is_open()) {
+            log << t.timestamp << "|" << type << "|£" << amount << endl;
+        }
     }
 
 public:
@@ -103,10 +136,12 @@ public:
     void deposit(double amount, string fromCurrency = "GBP") {//trasaction function being created
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
+            logTransaction("FOREIGN DEPOSIT", amount);
         }
         else {
             balance += amount;
             saveToFile();//overites data to show new balace
+            logTransaction("DEPOSIT", amount);
             cout << "Deposit successful.\n";
         }
     }
@@ -118,12 +153,20 @@ public:
         else {//anything else allow andf save new balance to file
             balance -= amount;
             saveToFile();
+            logTransaction("WITHDRAWAL", amount);
             cout << "Withdrawl successful.\n";
         }
     }
 
     void checkBalance() {
         cout << "current balance: £" << balance << "\n";
+    }
+    
+    void showTransactionHistory() {
+        cout << "\nAccount Transaction History:\n";
+        for (auto& t : transactions) {
+            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+        }
     }
 };
 //phase 2.1 creating class for savings
@@ -133,6 +176,21 @@ private:
     int ssortCode;
     double sbalance;
     double interestRate = 0.02; //2% intrest rate from trasnfering into savings
+    
+    vector<Transaction> transactions;
+    
+    void logTransaction(string type, double amouunt) {
+        Transaction t;
+        t.type = type;
+        t.amount = amount;
+        t.timestamp = getCurrentTime();
+        transaction.push_back(t);
+        
+        ofstream log("savings_transaction.txt", ios::app);
+        if (log.is_open()) {
+            log << t.timestamp << "|" << type << "| £" << amount << endl;
+        }
+    }
 
 public:
     void createSavingsAccount() {
@@ -164,6 +222,7 @@ public:
     void deposit(double amount) {//trasaction function being created
         sbalance += amount;
         saveToFile();//overites data to show new balace
+        logTransaction("DEPOSIT", amount);
         cout << "Savings deposit successful.\n";
     }
 
@@ -174,12 +233,20 @@ public:
         else {//anything else allow andf save new balance to file
             sbalance -= amount;
             saveToFile();
+            logTransaction("WITHDRAWAL", amount);
             cout << "Savings withdrawl successful.\n";
         }
     }
 
     void checkBalance() {
         cout << "Savings balance: £" << sbalance << "\n";
+    }
+    
+    void showTransactionHistory() {
+        cout << "\nSavings Transaction History:\n";
+        for (auto& t : transactions) {
+            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+        }
     }
 };
 
