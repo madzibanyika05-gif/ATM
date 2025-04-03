@@ -5,6 +5,7 @@
 #include <sstream> // for string streams
 #include <chrono>
 #include <iomanip>
+#include <cmath> // for round function
 
 using namespace std;
 
@@ -20,9 +21,8 @@ public:
     //menu for currency converter
     void showCurrencyMenu() {
         cout << "\n-=-=-=- Select currency -=-=-=-\n";
-        cout << "1. GBP (£)\n";
-        cout << "2. USD ($)\n";
-        cout << "3. EUR (€)\n";
+        cout << "1. USD ($)\n"; // got rid of GBP cause not a foreign currency
+        cout << "2. EUR (€)\n";
         cout << "Choice: ";
     }
 
@@ -31,7 +31,7 @@ public:
         if (from == "GBP" && to == "EUR") return amount * gbpToEur;
         if (from == "USD" && to == "GBP") return amount * usdToGbp;
         if (from == "EUR" && to == "GBP") return amount * eurToGbp;
-        return amount; // Fallback
+        return amount; // fallback
     }
 };
 
@@ -178,6 +178,19 @@ public:
                 << currencySymbol << t.amount;
             if (t.currency != "GBP") cout << " (" << t.currency << ")";
             cout << endl;
+        }
+    }
+
+    bool VerifyPin() {
+        int enteredPin;
+        cout << "Enter pin: ";
+        cin >> enteredPin;
+        if (enteredPin == pin) {
+            return true;
+        }
+        else {
+            cout << "Incorrect pin.\n";
+            return false;
         }
     }
 };
@@ -329,15 +342,19 @@ int main() {
 
         case 7: {
             if (hasSavings) {
-                double amount;
-                cout << "Transfer amount to savings: £";
-                cin >> amount;
-                if (amount <= user.getBalance()) {
-                    user.withdraw(amount, "TRANSFER TO SAVINGS");
-                    usersavings.deposit(amount, "TRANSFER FROM MAIN");
-                }
-                else {
-                    cout << "Insufficient funds for transfer.\n";
+                // PIN verification fixed: removed semicolon after VerifyPin()
+                if (user.VerifyPin()) {
+                    double amount;
+                    cout << "Transfer amount to savings: £";
+                    cin >> amount;
+                    if (amount <= user.getBalance()) {
+                        double netAmount = round((amount * 0.98) * 100) / 100; // 2% fee for transfer whilst keeping digits
+                        user.withdraw(amount, "TRANSFER TO SAVINGS");
+                        usersavings.deposit(amount, "TRANSFER FROM MAIN");
+                    }
+                    else {
+                        cout << "Insufficient funds for transfer.\n";
+                    }
                 }
             }
             else {
@@ -347,17 +364,21 @@ int main() {
             break;
         }
 
-        case 8: {  // New transfer from savings case
+        case 8: {  // Transfer from Savings with PIN check
             if (hasSavings) {
-                double amount;
-                cout << "Transfer amount to main account: £";
-                cin >> amount;
-                if (amount <= usersavings.getBalance()) {
-                    usersavings.withdraw(amount, "TRANSFER TO MAIN");
-                    user.deposit(amount, "GBP", "TRANSFER FROM SAVINGS");
-                }
-                else {
-                    cout << "Insufficient funds in savings.\n";
+                // PIN verification fixed: removed semicolon after VerifyPin()
+                if (user.VerifyPin()) {
+                    double amount;
+                    cout << "Transfer amount to main account: £";
+                    cin >> amount;
+                    if (amount <= usersavings.getBalance()) {
+                        double netAmount = round((amount * 0.98) * 100) / 100; // 2% fee for savings to main too
+                        usersavings.withdraw(amount, "TRANSFER TO MAIN");
+                        user.deposit(amount, "GBP", "TRANSFER FROM SAVINGS");
+                    }
+                    else {
+                        cout << "Insufficient funds in savings.\n";
+                    }
                 }
             }
             else {
@@ -407,7 +428,7 @@ int main() {
             cout << "Enter amount: ";
             cin >> amount;
 
-            string currencies[] = { "GBP", "USD", "EUR" };
+            string currencies[] = { "USD", "EUR" }; // removed GBP
             user.deposit(amount, currencies[currencyChoice - 1]);
             break;
         }
