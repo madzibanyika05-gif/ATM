@@ -40,6 +40,7 @@ struct Transaction {
     string type;
     double amount;
     string timestamp;
+    string currency;  // Added to track currency type
 };
 
 string getCurrentTime() {
@@ -53,7 +54,7 @@ string getCurrentTime() {
 }
 
 //phase 1.1 adding account class
-class Account {
+class Account {// class for creating an account and holding account details
 private:
     int accountNumber;
     int pin;
@@ -71,25 +72,26 @@ private:
 
     vector<Transaction> transactions;
 
-    void logTransaction(string type, double amount) {
+    void logTransaction(string type, double amount, string curr = "GBP") {  // Modified
         Transaction t;
         t.type = type;
         t.amount = amount;
         t.timestamp = getCurrentTime();
+        t.currency = curr;  // Store currency information
         transactions.push_back(t);
 
-        ofstream log("account_transactions.txt", ios::app);
+        ofstream log("account_transactions.txt", ios::app);// saving transactions to files
         if (log.is_open()) {
-            log << t.timestamp << "|" << type << "|£" << amount << endl;
+            log << t.timestamp << "|" << type << "|" << curr << "|£" << amount << endl;
         }
     }
 
 public:
     double getBalance() { return balance; }
 
-    void saveToFile() {
-        ofstream file("accounts.txt", ios::trunc);
-        if (file.is_open()) {
+    void saveToFile() {// function to save account details to file
+        ofstream file("accounts.txt", ios::trunc);  // ios::app = append mode this adds to file instead of overwriting//changed to trunc to overwrite
+        if (file.is_open()) {//checks if file opens successfully and writes account number etc...
             file << accountNumber << " "
                 << sortCode << " "
                 << pin << " "
@@ -97,23 +99,22 @@ public:
             file.close();
         }
         else {
-            cout << "Error saving account!\n";
+            cout << "Error saving account!\n";//error if file cant open
         }
     }
 
-    void createAccount() {
-        cout << "Enter your account number: ";
+    void createAccount() {//function to create account by getting user info
+        cout << "Enter your account number: ";// questions
         cin >> accountNumber;
         cout << "Enter your sort code: ";
         cin >> sortCode;
         cout << "Enter your pin: ";
         cin >> pin;
-        balance = 1000.00;
+        balance = 1000.00; //startinh balance of 1k
         saveToFile();
-        cout << "Account created successfully.\n";
+        cout << "Account created successfully.\n";//account made
     }
-
-    void resetPIN() {
+    void resetPIN() {//reset pin function update 3.5
         int oldPIN, newPIN, confirmPIN;
         cout << "Enter old pin: ";
         cin >> oldPIN;
@@ -128,7 +129,7 @@ public:
         cout << "Confirm pin: ";
         cin >> confirmPIN;
 
-        if (newPIN != confirmPIN) {
+        if (newPIN != confirmPIN) {// if pins do not have same value
             cout << "Pin dooes not match.\n";
             return;
         }
@@ -137,27 +138,24 @@ public:
         saveToFile();
         cout << "Pin change successful.\n";
     }
-
-    // Modified to support different transaction types
     void deposit(double amount, string fromCurrency = "GBP", string transType = "DEPOSIT") {
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
-            logTransaction("FOREIGN DEPOSIT", amount);
+            logTransaction("FOREIGN DEPOSIT", amount, fromCurrency);  // Log currency
         }
         else {
             balance += amount;
-            saveToFile();
+            saveToFile();//overites data to show new balace
             logTransaction(transType, amount);
             cout << "Deposit successful.\n";
         }
     }
 
-    // Modified to support different transaction types
     void withdraw(double amount, string transType = "WITHDRAWAL") {
-        if (amount > balance) {
+        if (amount > balance) {//calculation to check if withdrawl amount is above balance decilne
             cout << "Insufficient funds.\n";
         }
-        else {
+        else {//anything else allow andf save new balance to file
             balance -= amount;
             saveToFile();
             logTransaction(transType, amount);
@@ -172,18 +170,25 @@ public:
     void showTransactionHistory() {
         cout << "\nAccount Transaction History:\n";
         for (auto& t : transactions) {
-            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+            string currencySymbol = (t.currency == "GBP") ? "£" :
+                (t.currency == "USD") ? "$" :
+                (t.currency == "EUR") ? "€" : "";
+
+            cout << t.timestamp << " - " << t.type << " "
+                << currencySymbol << t.amount;
+            if (t.currency != "GBP") cout << " (" << t.currency << ")";
+            cout << endl;
         }
     }
 };
 
 //phase 2.1 creating class for savings
-class Savings {
+class Savings {//class for savings
 private:
     int saccountNumber;
     int ssortCode;
     double sbalance;
-    double interestRate = 0.02;
+    double interestRate = 0.02; //2% intrest rate from trasnfering into savings
 
     vector<Transaction> transactions;
 
@@ -192,6 +197,7 @@ private:
         t.type = type;
         t.amount = amount;
         t.timestamp = getCurrentTime();
+        t.currency = "GBP";  // Savings only in GBP
         transactions.push_back(t);
 
         ofstream log("savings_transaction.txt", ios::app);
@@ -216,8 +222,11 @@ public:
 
     void applyInterest() {
         double interest = sbalance * interestRate;
-        sbalance += interest;
-        saveToFile();
+        if (interest > 0) {
+            sbalance += interest;
+            saveToFile();
+            logTransaction("INTEREST APPLIED", interest);  // Track interest separately
+        }
     }
 
     void saveToFile(string filename = "savings.txt") {
@@ -229,22 +238,19 @@ public:
             file.close();
         }
     }
-
-    // Modified to support different transaction types
     void deposit(double amount, string transType = "DEPOSIT") {
         sbalance += amount;
         applyInterest();
-        saveToFile();
+        saveToFile();//overites data to show new balace
         logTransaction(transType, amount);
         cout << "Savings deposit successful.\n";
     }
 
-    // Modified to support different transaction types
     void withdraw(double amount, string transType = "WITHDRAWAL") {
-        if (amount > sbalance) {
+        if (amount > sbalance) {//calculation to check if withdrawl amount is above balance decilne
             cout << "Insufficient funds.\n";
         }
-        else {
+        else {//anything else allow andf save new balance to file
             sbalance -= amount;
             applyInterest();
             saveToFile();
@@ -260,12 +266,14 @@ public:
     void showTransactionHistory() {
         cout << "\nSavings Transaction History:\n";
         for (auto& t : transactions) {
-            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
+            cout << t.timestamp << " - " << t.type << " £" << t.amount;
+            if (t.type == "INTEREST APPLIED") cout << " (Auto)";
+            cout << endl;
         }
     }
 };
 
-// Updated main menu with bidirectional transfers
+//now creating main menu
 void showMainMenu(bool hasSavings) {
     cout << "\n-=-=-=- Haven ATM, Main Menu -=-=-=-\n";
     cout << "1. Check balance\n";
@@ -276,7 +284,7 @@ void showMainMenu(bool hasSavings) {
     cout << "6. Transaction history\n";
     if (hasSavings) {
         cout << "7. Transfer to Savings\n";
-        cout << "8. Transfer from Savings\n";  // New transfer option
+        cout << "8. Transfer from Savings\n";
         cout << "9. Check savings balance\n";
         cout << "10. Exit\n";
     }
@@ -325,10 +333,8 @@ int main() {
                 cout << "Transfer amount to savings: £";
                 cin >> amount;
                 if (amount <= user.getBalance()) {
-                    // Use TRANSFER_OUT type for main account
-                    user.withdraw(amount, "TRANSFER_OUT");
-                    // Use TRANSFER_IN type for savings account
-                    usersavings.deposit(amount, "TRANSFER_IN");
+                    user.withdraw(amount, "TRANSFER TO SAVINGS");
+                    usersavings.deposit(amount, "TRANSFER FROM MAIN");
                 }
                 else {
                     cout << "Insufficient funds for transfer.\n";
@@ -347,10 +353,8 @@ int main() {
                 cout << "Transfer amount to main account: £";
                 cin >> amount;
                 if (amount <= usersavings.getBalance()) {
-                    // Use TRANSFER_OUT type for savings account
-                    usersavings.withdraw(amount, "TRANSFER_OUT");
-                    // Use TRANSFER_IN type for main account
-                    user.deposit(amount, "GBP", "TRANSFER_IN");
+                    usersavings.withdraw(amount, "TRANSFER TO MAIN");
+                    user.deposit(amount, "GBP", "TRANSFER FROM SAVINGS");
                 }
                 else {
                     cout << "Insufficient funds in savings.\n";
@@ -370,6 +374,7 @@ int main() {
 
         case 6: {
             user.showTransactionHistory();
+            usersavings.showTransactionHistory();
             break;
         }
 
