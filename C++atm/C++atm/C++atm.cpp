@@ -3,8 +3,8 @@
 #include <vector> // used for arrays
 #include <fstream> // for file operations
 #include <sstream> // for string streams
-#include <chrono>
-#include <iomanip>
+#include <chrono> // for time stamps for transaction histoy and function
+#include <iomanip> // for date and time formatting
 #include <cmath> // for round function
 
 using namespace std;
@@ -12,7 +12,7 @@ using namespace std;
 //phase 2.2 creating class for currency converter had to move to the begining
 class CurrencyConverter {
 private:
-    const double gbpToUsd = 1.27; // backup average exchange rate if api fails
+    const double gbpToUsd = 1.27; // Conversion rates for currency exchange
     const double gbpToEur = 1.17;
     const double usdToGbp = 1 / 1.27;
     const double eurToGbp = 1 / 1.17;
@@ -36,21 +36,21 @@ public:
 };
 
 //phase 4.0 transaction history
-struct Transaction {
+struct Transaction {// structure to store transaction details
     string type;
     double amount;
     string timestamp;
     string currency;  // Added to track currency type
 };
 
-string getCurrentTime() {
-    auto now = chrono::system_clock::now();
-    time_t now_time = chrono::system_clock::to_time_t(now);
+string getCurrentTime() {// time function created
+    auto now = chrono::system_clock::now(); // gets current time
+    time_t now_time = chrono::system_clock::to_time_t(now); // converts time to calander time
     tm tm_struct;
-    localtime_s(&tm_struct, &now_time);
+    localtime_s(&tm_struct, &now_time); // convert to local time
     stringstream ss;
     ss << put_time(&tm_struct, "%Y-%m-%d %H:%M:%S");
-    return ss.str();
+    return ss.str(); // return formated string
 }
 
 //phase 1.1 adding account class
@@ -60,9 +60,9 @@ private:
     int pin;
     int sortCode;
     double balance;
-    string currency = "GBP";
+    string currency = "GBP"; // Defualt currency 
 
-    void convertAndDeposit(double amount, string fromCurrency) {
+    void convertAndDeposit(double amount, string fromCurrency) {// converts $ or € to GBP and deposits
         CurrencyConverter converter;
         double converted = converter.convert(amount, fromCurrency, currency);
         balance += converted;
@@ -164,10 +164,10 @@ public:
     }
 
     void checkBalance() {
-        cout << "current balance: £" << balance << "\n";
+        cout << "current balance: £" << balance << "\n"; //displaying current balance
     }
 
-    void showTransactionHistory() {
+    void showTransactionHistory() {// showing transaction history and applying correnct symbol
         cout << "\nAccount Transaction History:\n";
         for (auto& t : transactions) {
             string currencySymbol = (t.currency == "GBP") ? "£" :
@@ -181,7 +181,7 @@ public:
         }
     }
 
-    bool VerifyPin() {
+    bool VerifyPin() {// method to verify pin, this is called when user wants to stransfer too and from savings
         int enteredPin;
         cout << "Enter pin: ";
         cin >> enteredPin;
@@ -197,13 +197,13 @@ public:
 
 //phase 2.1 creating class for savings
 class Savings {//class for savings
-private:
+private:// storing details
     int saccountNumber;
     int ssortCode;
     double sbalance;
     double interestRate = 0.02; //2% intrest rate from trasnfering into savings
 
-    vector<Transaction> transactions;
+    vector<Transaction> transactions;// to store transaction history for savings account
 
     void logTransaction(string type, double amount) {
         Transaction t;
@@ -222,7 +222,7 @@ private:
 public:
     double getBalance() { return sbalance; }  // Added balance getter
 
-    void createSavingsAccount() {
+    void createSavingsAccount() {// create new savings account setup menu process
         cout << "\n-=-=-=- Savings Account Setup -=-=-=-\n ";
         cout << "Enter savings account number: ";
         cin >> saccountNumber;
@@ -233,25 +233,25 @@ public:
         cout << "Savings account created!\n";
     }
 
-    void applyInterest() {
+    void applyInterest() {// calling to apply intrest 
         double interest = sbalance * interestRate;
         if (interest > 0) {
             sbalance += interest;
             saveToFile();
-            logTransaction("INTEREST APPLIED", interest);  // Track interest separately
+            logTransaction("INTEREST APPLIED", interest);  // logging interest applied
         }
     }
 
-    void saveToFile(string filename = "savings.txt") {
+    void saveToFile(string filename = "savings.txt") {// saving account details to file
         ofstream file(filename, ios::app);
         if (file.is_open()) {
             file << saccountNumber << " "
                 << ssortCode << " "
                 << sbalance << "\n";
-            file.close();
+            file.close();// closes file stream
         }
     }
-    void deposit(double amount, string transType = "DEPOSIT") {
+    void deposit(double amount, string transType = "DEPOSIT") {// deposits money into savings and automatially applys intrest
         sbalance += amount;
         applyInterest();
         saveToFile();//overites data to show new balace
@@ -259,7 +259,7 @@ public:
         cout << "Savings deposit successful.\n";
     }
 
-    void withdraw(double amount, string transType = "WITHDRAWAL") {
+    void withdraw(double amount, string transType = "WITHDRAWAL") {// withdraws money from savings and automatially applys intrest
         if (amount > sbalance) {//calculation to check if withdrawl amount is above balance decilne
             cout << "Insufficient funds.\n";
         }
@@ -272,11 +272,11 @@ public:
         }
     }
 
-    void checkBalance() {
+    void checkBalance() {// balance is checked 
         cout << "Savings balance: £" << sbalance << "\n";
     }
 
-    void showTransactionHistory() {
+    void showTransactionHistory() {// show transaction history for savings account
         cout << "\nSavings Transaction History:\n";
         for (auto& t : transactions) {
             cout << t.timestamp << " - " << t.type << " £" << t.amount;
@@ -295,36 +295,36 @@ void showMainMenu(bool hasSavings) {
     cout << "4. Deposit foreign currency\n";
     cout << "5. Reset pin\n";
     cout << "6. Transaction history\n";
-    if (hasSavings) {
+    if (hasSavings) {// if savings has been created extra options are displayed
         cout << "7. Transfer to Savings\n";
         cout << "8. Transfer from Savings\n";
         cout << "9. Check savings balance\n";
         cout << "10. Exit\n";
     }
     else {
-        cout << "7. Create savings account\n";
+        cout << "7. Create savings account\n"; // if no savings created these are displayed
         cout << "8. Exit\n";
     }
 }
 
-int main() {
-    Account user;
-    Savings usersavings;
-    CurrencyConverter converter;
-    bool hasSavings = false;
-    user.createAccount();
+int main() {// main porgrem execution and calling
+    Account user; // main account object
+    Savings usersavings; // savings account object
+    CurrencyConverter converter; // currency converter object
+    bool hasSavings = false; // for tracking savings account status
+    user.createAccount(); // begin with account creation
 
-    int choice;
+    int choice; // store users menu selection
     do {
-        showMainMenu(hasSavings);
-        cin >> choice;
+        showMainMenu(hasSavings); // displays menu for user, hassavigs so that it shows the correct options
+        cin >> choice;// gets input
 
         switch (choice) {
         case 1:
-            user.checkBalance();
+            user.checkBalance();// checks main account balance
             break;
 
-        case 2: {
+        case 2: {// deposit to main account
             double amount;
             cout << "Enter deposit amount: £";
             cin >> amount;
@@ -332,7 +332,7 @@ int main() {
             break;
         }
 
-        case 3: {
+        case 3: {// withdraw from main account
             double amount;
             cout << "Enter withdrawal amount: £";
             cin >> amount;
@@ -340,7 +340,7 @@ int main() {
             break;
         }
 
-        case 7: {
+        case 7: {// savings transfer or creation
             if (hasSavings) {
                 // PIN verification fixed: removed semicolon after VerifyPin()
                 if (user.VerifyPin()) {
@@ -388,18 +388,18 @@ int main() {
             break;
         }
 
-        case 5: {
+        case 5: {// pin reset function
             user.resetPIN();
             break;
         }
 
-        case 6: {
+        case 6: {// transaction history function
             user.showTransactionHistory();
             usersavings.showTransactionHistory();
             break;
         }
 
-        case 9: {
+        case 9: {// savings balance check
             if (hasSavings) {
                 usersavings.checkBalance();
                 break;
@@ -411,7 +411,7 @@ int main() {
             break;
         }
 
-        case 10: {
+        case 10: {//Exit program
             if (hasSavings) {
                 cout << "Thank you for banking with Haven ATM.\n";
                 return 0;
@@ -419,7 +419,7 @@ int main() {
             break;
         }
 
-        case 4: {
+        case 4: {// deposit foreign currency
             double amount;
             int currencyChoice;
             converter.showCurrencyMenu();
@@ -436,7 +436,7 @@ int main() {
         default:
             cout << "Invalid option. Please try again.\n";
         }
-    } while (true);
+    } while (true);// infinite loop until exit
 
     return 0;
 }
