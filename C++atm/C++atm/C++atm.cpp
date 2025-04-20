@@ -6,6 +6,7 @@
 #include <chrono> // for time stamps for transaction histoy and function
 #include <iomanip> // for date and time formatting
 #include <cmath> // for round function
+#include <limits> // for input validation
 
 using namespace std;
 
@@ -104,20 +105,39 @@ public:
     }
 
     void createAccount() {//function to create account by getting user info
-        cout << "Enter your account number: ";// questions
-        cin >> accountNumber;
-        cout << "Enter your sort code: ";
-        cin >> sortCode;
-        cout << "Enter your pin: ";
-        cin >> pin;
-        balance = 1000.00; //startinh balance of 1k
-        saveToFile();
-        cout << "Account created successfully.\n";//account made
+        while (true) {
+            cout << "Enter your account number: ";
+            if (!(cin >> accountNumber)) {
+                handleInvalidInput();
+                continue;
+            }
+
+            cout << "Enter your sort code: ";
+            if (!(cin >> sortCode)) {
+                handleInvalidInput();
+                continue;
+            }
+
+            cout << "Enter your pin: ";
+            if (!(cin >> pin)) {
+                handleInvalidInput();
+                continue;
+            }
+
+            balance = 1000.00; //startinh balance of 1k
+            saveToFile();
+            cout << "Account created successfully.\n";
+            break;
+        }
     }
+
     void resetPIN() {//reset pin function update 3.5
         int oldPIN, newPIN, confirmPIN;
         cout << "Enter old pin: ";
-        cin >> oldPIN;
+        if (!(cin >> oldPIN)) {
+            handleInvalidInput();
+            return;
+        }
 
         if (oldPIN != pin) {
             cout << "Incorrect pin.\n";
@@ -125,9 +145,16 @@ public:
         }
 
         cout << "Enter new pin: ";
-        cin >> newPIN;
+        if (!(cin >> newPIN)) {
+            handleInvalidInput();
+            return;
+        }
+
         cout << "Confirm pin: ";
-        cin >> confirmPIN;
+        if (!(cin >> confirmPIN)) {
+            handleInvalidInput();
+            return;
+        }
 
         if (newPIN != confirmPIN) {// if pins do not have same value
             cout << "Pin dooes not match.\n";
@@ -138,6 +165,7 @@ public:
         saveToFile();
         cout << "Pin change successful.\n";
     }
+
     void deposit(double amount, string fromCurrency = "GBP", string transType = "DEPOSIT") {
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
@@ -184,7 +212,10 @@ public:
     bool VerifyPin() {// method to verify pin, this is called when user wants to stransfer too and from savings
         int enteredPin;
         cout << "Enter pin: ";
-        cin >> enteredPin;
+        if (!(cin >> enteredPin)) {
+            handleInvalidInput();
+            return false;
+        }
         if (enteredPin == pin) {
             return true;
         }
@@ -192,6 +223,13 @@ public:
             cout << "Incorrect pin.\n";
             return false;
         }
+    }
+
+private:
+    void handleInvalidInput() {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Invalid input. Please try again.\n";
     }
 };
 
@@ -223,14 +261,25 @@ public:
     double getBalance() { return sbalance; }  // Added balance getter
 
     void createSavingsAccount() {// create new savings account setup menu process
-        cout << "\n-=-=-=- Savings Account Setup -=-=-=-\n ";
-        cout << "Enter savings account number: ";
-        cin >> saccountNumber;
-        cout << "Enter sort code: ";
-        cin >> ssortCode;
-        sbalance = 10.00;
-        saveToFile("savings.txt");
-        cout << "Savings account created!\n";
+        while (true) {
+            cout << "\n-=-=-=- Savings Account Setup -=-=-=-\n ";
+            cout << "Enter savings account number: ";
+            if (!(cin >> saccountNumber)) {
+                handleInvalidInput();
+                continue;
+            }
+
+            cout << "Enter sort code: ";
+            if (!(cin >> ssortCode)) {
+                handleInvalidInput();
+                continue;
+            }
+
+            sbalance = 10.00;
+            saveToFile("savings.txt");
+            cout << "Savings account created!\n";
+            break;
+        }
     }
 
     void applyInterest() {// calling to apply intrest 
@@ -251,6 +300,7 @@ public:
             file.close();// closes file stream
         }
     }
+
     void deposit(double amount, string transType = "DEPOSIT") {// deposits money into savings and automatially applys intrest
         sbalance += amount;
         applyInterest();
@@ -284,6 +334,13 @@ public:
             cout << endl;
         }
     }
+
+private:
+    void handleInvalidInput() {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Invalid input. Please try again.\n";
+    }
 };
 
 //now creating main menu
@@ -307,17 +364,47 @@ void showMainMenu(bool hasSavings) {
     }
 }
 
+// Global input validation handler
+bool handleGlobalInputError(int& attempts) {
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Invalid input. Please try again.\n";
+    if (++attempts >= 3) {
+        cout << "Too many incorrect attempts. Exiting...\n";
+        return true;
+    }
+    return false;
+}
+
 int main() {// main porgrem execution and calling
     Account user; // main account object
     Savings usersavings; // savings account object
     CurrencyConverter converter; // currency converter object
     bool hasSavings = false; // for tracking savings account status
+    int invalidAttempts = 0; // Track consecutive invalid inputs
+
     user.createAccount(); // begin with account creation
 
     int choice; // store users menu selection
     do {
         showMainMenu(hasSavings); // displays menu for user, hassavigs so that it shows the correct options
-        cin >> choice;// gets input
+
+        if (!(cin >> choice)) {
+            if (handleGlobalInputError(invalidAttempts)) return 0;
+            continue;
+        }
+
+        int maxChoice = hasSavings ? 10 : 8;
+        if (choice < 1 || choice > maxChoice) {
+            cout << "Invalid option. Please try again.\n";
+            if (++invalidAttempts >= 3) {
+                cout << "Too many incorrect attempts. Exiting...\n";
+                return 0;
+            }
+            continue;
+        }
+
+        invalidAttempts = 0; // Reset counter on valid input
 
         switch (choice) {
         case 1:
@@ -326,29 +413,46 @@ int main() {// main porgrem execution and calling
 
         case 2: {// deposit to main account
             double amount;
-            cout << "Enter deposit amount: £";
-            cin >> amount;
+            while (true) {
+                cout << "Enter deposit amount: £";
+                if (!(cin >> amount) || amount <= 0) {
+                    if (handleGlobalInputError(invalidAttempts)) return 0;
+                    continue;
+                }
+                break;
+            }
             user.deposit(amount);
             break;
         }
 
         case 3: {// withdraw from main account
             double amount;
-            cout << "Enter withdrawal amount: £";
-            cin >> amount;
+            while (true) {
+                cout << "Enter withdrawal amount: £";
+                if (!(cin >> amount) || amount <= 0) {
+                    if (handleGlobalInputError(invalidAttempts)) return 0;
+                    continue;
+                }
+                break;
+            }
             user.withdraw(amount);
             break;
         }
 
         case 7: {// savings transfer or creation
             if (hasSavings) {
-                // PIN verification fixed: removed semicolon after VerifyPin()
                 if (user.VerifyPin()) {
                     double amount;
-                    cout << "Transfer amount to savings: £";
-                    cin >> amount;
+                    while (true) {
+                        cout << "Transfer amount to savings: £";
+                        if (!(cin >> amount) || amount <= 0) {
+                            if (handleGlobalInputError(invalidAttempts)) return 0;
+                            continue;
+                        }
+                        break;
+                    }
                     if (amount <= user.getBalance()) {
-                        double netAmount = round((amount * 0.98) * 100) / 100; // 2% fee for transfer whilst keeping digits
+                        double netAmount = round((amount * 0.98) * 100) / 100;
                         user.withdraw(amount, "TRANSFER TO SAVINGS");
                         usersavings.deposit(amount, "TRANSFER FROM MAIN");
                     }
@@ -366,13 +470,18 @@ int main() {// main porgrem execution and calling
 
         case 8: {  // Transfer from Savings with PIN check
             if (hasSavings) {
-                // PIN verification fixed: removed semicolon after VerifyPin()
                 if (user.VerifyPin()) {
                     double amount;
-                    cout << "Transfer amount to main account: £";
-                    cin >> amount;
+                    while (true) {
+                        cout << "Transfer amount to main account: £";
+                        if (!(cin >> amount) || amount <= 0) {
+                            if (handleGlobalInputError(invalidAttempts)) return 0;
+                            continue;
+                        }
+                        break;
+                    }
                     if (amount <= usersavings.getBalance()) {
-                        double netAmount = round((amount * 0.98) * 100) / 100; // 2% fee for savings to main too
+                        double netAmount = round((amount * 0.98) * 100) / 100;
                         usersavings.withdraw(amount, "TRANSFER TO MAIN");
                         user.deposit(amount, "GBP", "TRANSFER FROM SAVINGS");
                     }
@@ -420,21 +529,41 @@ int main() {// main porgrem execution and calling
         }
 
         case 4: {// deposit foreign currency
-            double amount;
             int currencyChoice;
-            converter.showCurrencyMenu();
-            cin >> currencyChoice;
+            do {
+                converter.showCurrencyMenu();
+                if (!(cin >> currencyChoice)) {
+                    if (handleGlobalInputError(invalidAttempts)) return 0;
+                    continue;
+                }
+                if (currencyChoice < 1 || currencyChoice > 2) {
+                    cout << "Invalid currency choice. Please try again.\n";
+                    if (++invalidAttempts >= 3) {
+                        cout << "Too many incorrect attempts. Exiting...\n";
+                        return 0;
+                    }
+                    continue;
+                }
+                break;
+            } while (true);
 
-            cout << "Enter amount: ";
-            cin >> amount;
+            double amount;
+            while (true) {
+                cout << "Enter amount: ";
+                if (!(cin >> amount) || amount <= 0) {
+                    if (handleGlobalInputError(invalidAttempts)) return 0;
+                    continue;
+                }
+                break;
+            }
 
-            string currencies[] = { "USD", "EUR" }; // removed GBP
+            string currencies[] = { "USD", "EUR" };
             user.deposit(amount, currencies[currencyChoice - 1]);
             break;
         }
 
         default:
-            cout << "Invalid option. Please try again.\n";
+            break;
         }
     } while (true);// infinite loop until exit
 
