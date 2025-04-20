@@ -62,6 +62,7 @@ private:
     int sortCode;
     double balance;
     string currency = "GBP"; // Defualt currency 
+    string name; // Added name field
 
     void convertAndDeposit(double amount, string fromCurrency) {// converts $ or € to GBP and deposits
         CurrencyConverter converter;
@@ -96,7 +97,8 @@ public:
             file << accountNumber << " "
                 << sortCode << " "
                 << pin << " "
-                << balance << "\n";
+                << balance << " "
+                << name << "\n"; // Store name with account details
             file.close();
         }
         else {
@@ -106,6 +108,10 @@ public:
 
     void createAccount() {//function to create account by getting user info
         while (true) {
+            cout << "Enter your full name: ";
+            cin.ignore(); // Clear input buffer
+            getline(cin, name); // Get full name with spaces
+
             cout << "Enter your account number: ";
             if (!(cin >> accountNumber)) {
                 handleInvalidInput();
