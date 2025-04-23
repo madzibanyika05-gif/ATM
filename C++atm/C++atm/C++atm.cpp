@@ -108,6 +108,7 @@ public:
 
     void createAccount() {//function to create account by getting user info
         while (true) {
+            cout << "\n-=-=-=- Welcome to Haven ATM account set up -=-=-=-\n";
             cout << "Enter your full name: ";
             cin.ignore(); // Clear input buffer
             getline(cin, name); // Get full name with spaces
@@ -145,7 +146,7 @@ public:
             return;
         }
 
-        if (oldPIN != pin) {
+        if (oldPIN != pin) {//Checking if old pin matches pin entered
             cout << "Incorrect pin.\n";
             return;
         }
@@ -172,10 +173,10 @@ public:
         cout << "Pin change successful.\n";
     }
 
-    void deposit(double amount, string fromCurrency = "GBP", string transType = "DEPOSIT") {
+    void deposit(double amount, string fromCurrency = "GBP", string transType = "Deposit") {
         if (fromCurrency != currency) {
             convertAndDeposit(amount, fromCurrency);
-            logTransaction("FOREIGN DEPOSIT", amount, fromCurrency);  // Log currency
+            logTransaction("Foreign deposit", amount, fromCurrency);  // Log currency
         }
         else {
             balance += amount;
@@ -185,7 +186,7 @@ public:
         }
     }
 
-    void withdraw(double amount, string transType = "WITHDRAWAL") {
+    void withdraw(double amount, string transType = "Withdrawal") {
         if (amount > balance) {//calculation to check if withdrawl amount is above balance decilne
             cout << "Insufficient funds.\n";
         }
@@ -232,7 +233,7 @@ public:
     }
 
 private:
-    void handleInvalidInput() {
+    void handleInvalidInput() {// for try again
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Invalid input. Please try again.\n";
@@ -245,7 +246,6 @@ private:// storing details
     int saccountNumber;
     int ssortCode;
     double sbalance;
-    double interestRate = 0.02; //2% intrest rate from trasnfering into savings
 
     vector<Transaction> transactions;// to store transaction history for savings account
 
@@ -283,17 +283,8 @@ public:
 
             sbalance = 10.00;
             saveToFile("savings.txt");
-            cout << "Savings account created!\n";
+            cout << "Savings account created.\n";
             break;
-        }
-    }
-
-    void applyInterest() {// calling to apply intrest 
-        double interest = sbalance * interestRate;
-        if (interest > 0) {
-            sbalance += interest;
-            saveToFile();
-            logTransaction("INTEREST APPLIED", interest);  // logging interest applied
         }
     }
 
@@ -307,21 +298,21 @@ public:
         }
     }
 
-    void deposit(double amount, string transType = "DEPOSIT") {// deposits money into savings and automatially applys intrest
+    // depo into savings
+    void deposit(double amount, string transType = "Deposit") {
         sbalance += amount;
-        applyInterest();
         saveToFile();//overites data to show new balace
         logTransaction(transType, amount);
         cout << "Savings deposit successful.\n";
     }
 
-    void withdraw(double amount, string transType = "WITHDRAWAL") {// withdraws money from savings and automatially applys intrest
+    // with from savings
+    void withdraw(double amount, string transType = "Withdrawal") {
         if (amount > sbalance) {//calculation to check if withdrawl amount is above balance decilne
             cout << "Insufficient funds.\n";
         }
         else {//anything else allow andf save new balance to file
             sbalance -= amount;
-            applyInterest();
             saveToFile();
             logTransaction(transType, amount);
             cout << "Savings withdrawl successful.\n";
@@ -335,17 +326,15 @@ public:
     void showTransactionHistory() {// show transaction history for savings account
         cout << "\nSavings Transaction History:\n";
         for (auto& t : transactions) {
-            cout << t.timestamp << " - " << t.type << " £" << t.amount;
-            if (t.type == "INTEREST APPLIED") cout << " (Auto)";
-            cout << endl;
+            cout << t.timestamp << " - " << t.type << " £" << t.amount << endl;
         }
     }
 
 private:
-    void handleInvalidInput() {
+    void handleInvalidInput() {// for try again 
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "Invalid input. Please try again.\n";
+        cout << "Invalid input, please try again.\n";
     }
 };
 
@@ -458,9 +447,11 @@ int main() {// main porgrem execution and calling
                         break;
                     }
                     if (amount <= user.getBalance()) {
-                        double netAmount = round((amount * 0.98) * 100) / 100;
-                        user.withdraw(amount, "TRANSFER TO SAVINGS");
-                        usersavings.deposit(amount, "TRANSFER FROM MAIN");
+                        double fee = amount * 0.02;
+                        double netAmount = round((amount - fee) * 100) / 100;
+                        user.withdraw(amount, "Transfer to savings");
+                        usersavings.deposit(netAmount, "Transfer from main"); // fixed typo
+                        cout << "Service fee (2%): £" << fee << endl; // fee noti
                     }
                     else {
                         cout << "Insufficient funds for transfer.\n";
@@ -487,9 +478,11 @@ int main() {// main porgrem execution and calling
                         break;
                     }
                     if (amount <= usersavings.getBalance()) {
-                        double netAmount = round((amount * 0.98) * 100) / 100;
-                        usersavings.withdraw(amount, "TRANSFER TO MAIN");
-                        user.deposit(amount, "GBP", "TRANSFER FROM SAVINGS");
+                        double fee = amount * 0.02;
+                        double netAmount = round((amount - fee) * 100) / 100;
+                        usersavings.withdraw(amount, "Transfer to main"); // fixed typo
+                        user.deposit(netAmount, "GBP", "Transfer from savings");
+                        cout << "Service fee (2%): £" << fee << endl; // fee noti
                     }
                     else {
                         cout << "Insufficient funds in savings.\n";
