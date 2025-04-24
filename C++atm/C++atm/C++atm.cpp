@@ -27,7 +27,7 @@ public:
         cout << "Choice: ";
     }
 
-    double convert(double amount, string from, string to) {
+    double convert(double amount, string from, string to) {//help from ai with conversion rates
         if (from == "GBP" && to == "USD") return amount * gbpToUsd;
         if (from == "GBP" && to == "EUR") return amount * gbpToEur;
         if (from == "USD" && to == "GBP") return amount * usdToGbp;
@@ -52,7 +52,7 @@ string getCurrentTime() {// time function created
     stringstream ss;
     ss << put_time(&tm_struct, "%Y-%m-%d %H:%M:%S");
     return ss.str(); // return formated string
-}
+}// help from ai 
 
 //phase 1.1 adding account class
 class Account {// class for creating an account and holding account details
@@ -104,7 +104,7 @@ public:
         else {
             cout << "Error saving account!\n";//error if file cant open
         }
-    }
+    }// help from w3schools
 
     void createAccount() {//function to create account by getting user info
         while (true) {
@@ -171,7 +171,7 @@ public:
         pin = newPIN;
         saveToFile();
         cout << "Pin change successful.\n";
-    }
+    }// help from https://www.youtube.com/watch?v=UqpsvcuFAO8
 
     void deposit(double amount, string fromCurrency = "GBP", string transType = "Deposit") {
         if (fromCurrency != currency) {
@@ -339,7 +339,7 @@ private:
 };
 
 //now creating main menu
-void showMainMenu(bool hasSavings) {
+void showMainMenu(bool hasSavings) {// true or false if they have savings or not
     cout << "\n-=-=-=- Haven ATM, Main Menu -=-=-=-\n";
     cout << "1. Check balance\n";
     cout << "2. Deposit money\n";
@@ -381,7 +381,7 @@ int main() {// main porgrem execution and calling
     user.createAccount(); // begin with account creation
 
     int choice; // store users menu selection
-    do {
+    do {// help from ai on how to structure main function
         showMainMenu(hasSavings); // displays menu for user, hassavigs so that it shows the correct options
 
         if (!(cin >> choice)) {
@@ -401,7 +401,7 @@ int main() {// main porgrem execution and calling
 
         invalidAttempts = 0; // Reset counter on valid input
 
-        switch (choice) {
+        switch (choice) {// help from https://www.youtube.com/watch?v=rMOzUblCXsE
         case 1:
             user.checkBalance();// checks main account balance
             break;
@@ -565,6 +565,19 @@ int main() {// main porgrem execution and calling
             break;
         }
     } while (true);// infinite loop until exit
-
+    // help from https://www.youtube.com/watch?v=aOskrzlcBRY
     return 0;
 }
+// sources i used
+// https://www.w3schools.com/cpp/cpp_data_types.asp
+// https://www.w3schools.com/cpp/cpp_arrays.asp
+// https://www.geeksforgeeks.org/attributes-in-c/
+// https://cplusplus.com/doc/tutorial/files/
+// https://www.youtube.com/watch?v=UqpsvcuFAO8
+// https://www.w3schools.com/cpp/cpp_class_methods.asp
+// https://www.programiz.com/cpp-programming/function
+// https://www.youtube.com/watch?v=aOskrzlcBRY
+// https://www.w3schools.com/cpp/cpp_functions.asp
+// Learn c++ quickly book chapter 7 strings page 39
+// https://www.youtube.com/watch?v=rMOzUblCXsE
+//https://www.w3schools.com/cpp/cpp_files.asp

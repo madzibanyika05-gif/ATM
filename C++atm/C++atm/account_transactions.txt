@@ -58,3 +58,9 @@
 2025-04-23 00:00:48|Transfer to savings|GBP|£900
 2025-04-23 00:10:34|Transfer to savings|GBP|£900
 2025-04-23 01:39:16|Transfer to savings|GBP|£900
+2025-04-23 13:20:57|Deposit|GBP|£399.5
+2025-04-23 13:21:37|Withdrawal|GBP|£19.99
+2025-04-23 13:22:21|Foreign deposit|USD|£400
+2025-04-23 13:22:54|Foreign deposit|EUR|£100
+2025-04-23 13:25:22|Transfer to savings|GBP|£900
+2025-04-23 13:26:26|Transfer from savings|GBP|£196
